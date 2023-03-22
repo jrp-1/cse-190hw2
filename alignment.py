@@ -87,6 +87,15 @@ class MatchScore:
         # print as 1-indexed
         return "{0} {1} {2}".format(self.sequence, self.score, self.modification_index)
 
+    def __lt__(self, other):
+        return self.score < other.score
+
+    def get_score(self):
+        return self.score
+
+    def get_sequence(self):
+        return self.sequence
+
 # prints, void return
 def q1a(spectrum_file, sequence, modification_mass):
     """q1a(spectrum_file, sequence) -> print sequence(including modification) score modification_index(1-based)
@@ -95,6 +104,17 @@ def q1a(spectrum_file, sequence, modification_mass):
     spect = get_spectrum(spectrum_file)
     score = MatchScore(sequence, int(modification_mass), 0, spect)
     print(score)
+
+# prints, void return
+def q1b(spectrum_file, sequence, modification_mass):
+    """q1a(spectrum_file, sequence) -> print sequence(including modification) score modification_index(1-based)
+    str spectrum_file, str sequence, int modification_mass
+    q1a Peptide match score using intensity of only main b-ions with highest value for 1 modification"""
+    scores = list()
+    spect = get_spectrum(spectrum_file)
+    for i in range(0, len(sequence)):
+        scores.append(MatchScore(sequence, int(modification_mass), i, spect))
+    print(max(scores, key=lambda x: x.get_score()))
 
 
 # TODO: argv validations & better err messages
