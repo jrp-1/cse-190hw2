@@ -46,13 +46,15 @@ def get_spectrum(spectrum_file):
     for line in spectrum_list:
         separator = line.find('\t')
         if separator == -1:
-            spectra[int(line[0:-1])] = None
+            spectra[int(line[0:])] = None
         else:
-            spectra[int(line[0:separator])] = int(line[separator+1:-1])
+            spectra[int(line[0:separator])] = int(line[separator+1:])
 
     return spectra
 
-# def peak_summer(val1, val2):
+def mod_list(mass):
+    mlist = list(map(lambda a: mass + a, range(2,50)))
+    return(mlist)
 
 
 # sequence, SUM(score), modification_maxx, modification_index (0-based)
@@ -61,7 +63,10 @@ class MatchScore:
         self.score = 0
         # print(spect)
         # substring from 0 to modifcaiton_index then to end
-        self.sequence = seq[:mod_idx + 1] + ((lambda: "+", lambda: "")[mod_mass < 0])() + str(mod_mass) + seq[mod_idx + 1:]
+        if mod_mass != 0:
+            self.sequence = seq[:mod_idx + 1] + ((lambda: "+", lambda: "")[mod_mass < 0])() + str(mod_mass) + seq[mod_idx + 1:]
+        else:
+            self.sequence = seq
         self.modification_mass = mod_mass
         self.modification_index = mod_idx + 1 # 1 indexed for printing
 
@@ -79,8 +84,12 @@ class MatchScore:
         # peaks =  list(map(lambda val: ((lambda: spect[val], lambda: 0)[val in spect.keys()])(), b_vals))
         b_vals_in_spect = list(filter(lambda a: a in spect.keys(), b_vals))
 
+        # print(b_vals_in_spect)
+
         for peak_idx in b_vals_in_spect:
             self.score += spect[peak_idx]
+            # print(self.score)
+
         # self.score = reduce(lambda a, b: a+b, list(map(lambda a: spect[a], b_vals_in_spect)))
 
     def __str__(self):
@@ -104,6 +113,7 @@ def q1a(spectrum_file, sequence, modification_mass):
     spect = get_spectrum(spectrum_file)
     score = MatchScore(sequence, int(modification_mass), 0, spect)
     print(score)
+    sys.exit(0)
 
 # prints, void return
 def q1b(spectrum_file, sequence, modification_mass):
@@ -115,6 +125,50 @@ def q1b(spectrum_file, sequence, modification_mass):
     for i in range(0, len(sequence)):
         scores.append(MatchScore(sequence, int(modification_mass), i, spect))
     print(max(scores, key=lambda x: x.get_score()))
+    sys.exit(0)
+
+def q2(spectrum_file, sequence):
+    # builder -- build each with spectrum matches -- remove if next can't match
+    spect = get_spectrum(spectrum_file)
+    # print(MatchScore(sequence, 0, 0, spect))
+    scores = list()
+    scores.append(MatchScore(sequence, 0, 0, spect)) # no modifications
+
+    # filter before creating new MatchScores for each possible modification
+    # seq_list = {aa : getvalue(aa) for aa in list(sequence)}
+    seq_list = list(map(lambda x: getvalue(x), list(sequence)))
+
+    # seq_list[sequence[0]] += 1 # 1 Da for H-ion
+    seq_list[0] += 1
+
+    tmp_score = 0
+    # use mod_list once modified
+    for possible_mod in seq_list:
+        # mlist = list(filter(lambda x: x + tmp_score in spect.keys(), mod_list(seq_list[possible_mod])))
+        mlist = list(filter(lambda x: x + tmp_score in spect.keys(), mod_list(possible_mod)))
+        # print(list(map(lambda x: x + tmp_score, mlist)))
+        # tmp_score += seq_list[possible_mod]
+        tmp_score += possible_mod
+        for modification in mlist:  # if modification mass is in spectrum
+            # TODO: MISSING SuMMATION
+            # scores.append(MatchScore(sequence, modification - seq_list[possible_mod], seq_list.index(possible_mod), spect))
+            scores.append(MatchScore(sequence, modification - possible_mod, seq_list.index(possible_mod), spect))
+            # print(MatchScore(sequence, modification - possible_mod, seq_list.index(possible_mod), spect))
+
+    # print(seq_list)
+    # print(mlist)
+    # print(spect)
+    # print(scores)
+    print(max(scores, key=lambda x: x.get_score()))
+
+    # score => sequence (1 mod max) , score collisions
+    # check modifications, need to add new sequence for each (prune not in spectrum) need to add flag for mod?
+
+    sys.exit(0)
+
+def ec(spectrum_file, sequence):
+    spect = get_spectrum(spectrum_file)
+    sys.exit(0)
 
 
 # TODO: argv validations & better err messages
@@ -127,3 +181,12 @@ if sys.argv[1] == "q1a":
     q1a(sys.argv[2], sys.argv[3], sys.argv[4])
 elif sys.argv[1] == "q1b":
     q1b(sys.argv[2], sys.argv[3], sys.argv[4])
+elif sys.argv[1] == "q2a":
+    q2(sys.argv[2], sys.argv[3])
+elif sys.argv[1] == "q2b":
+    q2(sys.argv[2], sys.argv[3])
+elif sys.argv[1] == "ec":
+    ec(sys.argv[2], sys.argv[3])
+else:
+    print("Command not found", file=sys.stderr)
+    sys.exit(2)
