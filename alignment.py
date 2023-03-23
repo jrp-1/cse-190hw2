@@ -170,15 +170,18 @@ def ec(spectrum_file, sequence):
     spect = get_spectrum(spectrum_file)
     scores = list()
 
-    all_seq = list()
+    all_seqt = list()
 
     seq_len = len(sequence)
     for i in range(seq_len):
         tmp = ""
         for j in range(i, seq_len):
             tmp += sequence[j]
-            all_seq.append(tmp)
+            all_seqt.append(tmp)
 
+    spect_len = len(spect)
+
+    all_seq = list(filter(lambda x: len(x) <= spect_len, all_seqt))
     # print(all_seq)
 
 
@@ -230,6 +233,8 @@ def ec(spectrum_file, sequence):
     # print(mlist)
     # print(spect)
     # print(scores)
+    # for score in scores:
+    #     print(score)
     print(max(scores, key=lambda x: x.get_score()))
     sys.exit(0)
 
