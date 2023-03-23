@@ -46,7 +46,7 @@ def get_spectrum(spectrum_file):
     for line in spectrum_list:
         separator = line.find('\t')
         if separator == -1:
-            spectra[int(line[0:])] = None
+            spectra[int(line[0:])] = 0
         else:
             spectra[int(line[0:separator])] = int(line[separator+1:])
 
@@ -168,6 +168,69 @@ def q2(spectrum_file, sequence):
 
 def ec(spectrum_file, sequence):
     spect = get_spectrum(spectrum_file)
+    scores = list()
+
+    all_seq = list()
+
+    seq_len = len(sequence)
+    for i in range(seq_len):
+        tmp = ""
+        for j in range(i, seq_len):
+            tmp += sequence[j]
+            all_seq.append(tmp)
+
+    # print(all_seq)
+
+
+    # substrings of sequence -- then
+
+    scores.append(MatchScore(sequence, 0, 0, spect)) # no modifications
+
+    # filter before creating new MatchScores for each possible modification
+    # seq_list = {aa : getvalue(aa) for aa in list(sequence)}
+    # seq_list = list(map(lambda x: getvalue(x), list(sequence)))
+    all_seq_list = list()
+    for seq in all_seq:
+        all_seq_list.append(list(map(lambda x: getvalue(x), seq)))
+
+    # all_seq_list = list(map(lambda x: getvalue(x), all_seq))
+
+    # print(all_seq_list)
+
+    # print(seq_list)
+
+    # print(spect)
+
+    # seq_list[sequence[0]] += 1 # 1 Da for H-ion
+    # seq_list[0] += 1
+    # +1 Da for H-ion
+    # for seq in all_seq_list
+    #     seq[0] += 1
+
+    # tmp_score = 0
+    # use mod_list once modified
+    for possible_seq in all_seq_list:
+        tmp_score = 0
+        seq_idx = all_seq_list.index(possible_seq)
+        possible_seq[0] += 1 # 1 Da for H-ion for first AA
+        for possible_mod in possible_seq:
+            # mlist = list(filter(lambda x: x + tmp_score in spect.keys(), mod_list(seq_list[possible_mod])))
+            mlist = list(filter(lambda x: x + tmp_score in spect.keys(), mod_list(possible_mod)))
+            # print(list(map(lambda x: x + tmp_score, mlist)))
+            # tmp_score += seq_list[possible_mod]
+            tmp_score += possible_mod
+            for modification in mlist:  # if modification mass is in spectrum
+                # TODO: MISSING SuMMATION
+                # scores.append(MatchScore(sequence, modification - seq_list[possible_mod], seq_list.index(possible_mod), spect))
+                scores.append(MatchScore(all_seq[seq_idx], modification - possible_mod, possible_seq.index(possible_mod), spect))
+                # print(modification, all_seq[seq_idx], possible_mod, possible_seq)
+            # print(MatchScore(sequence, modification - possible_mod, seq_list.index(possible_mod), spect))
+
+    # print(seq_list)
+    # print(mlist)
+    # print(spect)
+    # print(scores)
+    print(max(scores, key=lambda x: x.get_score()))
     sys.exit(0)
 
 
